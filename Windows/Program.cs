@@ -46,7 +46,7 @@ public sealed class MainWindow : Form
     private string selectedBin = "";
     private bool updating;
     private readonly System.Windows.Forms.Timer githubTimer = new() { Interval = 3600000 };
-    private GithubReleaseInfo? pendingRelease;
+    private PocketOSManager.Updates.UpdateManifest? pendingManifest;
     private readonly Panel screenPreview = new() { Dock = DockStyle.Top, Height = 280, BackColor = Color.FromArgb(5, 9, 7) };
     private string previewMode = "MENU";
     private int previewSelection = 0;
@@ -60,7 +60,7 @@ public sealed class MainWindow : Form
     private DateTime serialRetryAfter = DateTime.MinValue;
     private string lastSerialIssue = "";
     private readonly System.Windows.Forms.Timer mirrorTimer = new() { Interval = 2500 };
-    private readonly string[] pocketApps = {"POKEMON PARTNER", "POKEMON INFO", "WILD ENCOUNTER", "SHINY HUNT", "CLOCK", "ABOUT", "WI-FI TOOLS", "PC MONITOR", "SETTINGS"};
+    private readonly string[] pocketApps = { "POKEMON PARTNER", "POKEMON INFO", "WILD ENCOUNTER", "SHINY HUNT", "CLOCK", "ABOUT", "WI-FI TOOLS", "PC MONITOR", "SETTINGS" };
     private static readonly Color Ink = Color.FromArgb(218, 248, 225);
     private static readonly Color Surface = Color.FromArgb(14, 23, 19);
     private static readonly Color Frame = Color.FromArgb(77, 105, 84);
@@ -91,17 +91,30 @@ public sealed class MainWindow : Form
         Width = 1050; Height = 780; MinimumSize = new Size(840, 680);
         AutoScaleMode = AutoScaleMode.Dpi;
         BackColor = Color.FromArgb(18, 21, 23);
-        var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3,
-            Padding = new Padding(22, 16, 22, 16), BackColor = BackColor };
+        var root = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 3,
+            Padding = new Padding(22, 16, 22, 16),
+            BackColor = BackColor
+        };
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 84));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 175));
         var header = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, Padding = new Padding(0, 4, 0, 12), Margin = new Padding(0) };
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 70));
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30));
-        header.Controls.Add(new Label { Text = "LT  LAZYTECH / POCKETOS", Dock = DockStyle.Fill,
-            TextAlign = ContentAlignment.MiddleLeft, AutoEllipsis = true, Padding = new Padding(10, 0, 0, 0),
-            Font = new Font("Consolas", 16, FontStyle.Bold), Margin = new Padding(0) }, 0, 0);
+        header.Controls.Add(new Label
+        {
+            Text = "LT  LAZYTECH / POCKETOS",
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleLeft,
+            AutoEllipsis = true,
+            Padding = new Padding(10, 0, 0, 0),
+            Font = new Font("Consolas", 16, FontStyle.Bold),
+            Margin = new Padding(0)
+        }, 0, 0);
         var settingsButton = Button("⚙  SETTINGS", () => { ShowSettings(); return Task.CompletedTask; });
         settingsButton.Dock = DockStyle.Fill; settingsButton.Margin = new Padding(12, 10, 4, 10);
         header.Controls.Add(settingsButton, 1, 0);
@@ -112,8 +125,13 @@ public sealed class MainWindow : Form
         screenTop.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
         screenTop.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         screenTop.RowStyles.Add(new RowStyle(SizeType.Absolute, 35));
-        screenTop.Controls.Add(new Label { Text = "ESP32 OLED  /  128 x 64", Dock = DockStyle.Fill,
-            TextAlign = ContentAlignment.MiddleLeft, Font = new Font("Consolas", 11, FontStyle.Bold) }, 0, 0);
+        screenTop.Controls.Add(new Label
+        {
+            Text = "ESP32 OLED  /  128 x 64",
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Font = new Font("Consolas", 11, FontStyle.Bold)
+        }, 0, 0);
         screenPreview.Dock = DockStyle.Fill;
         screenPreview.BackColor = Color.Black;
         screenPreview.Paint += PaintPreview;
@@ -131,20 +149,32 @@ public sealed class MainWindow : Form
         controls.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 14));
         controls.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 43));
         var pad = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 3, Margin = new Padding(25, 10, 0, 6) };
-        for (int i=0;i<3;i++) { pad.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f/3)); pad.RowStyles.Add(new RowStyle(SizeType.Percent, 100f/3)); }
-        void PadButton(string title, string action, int x, int y) {
+        for (int i = 0; i < 3; i++) { pad.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f / 3)); pad.RowStyles.Add(new RowStyle(SizeType.Percent, 100f / 3)); }
+        void PadButton(string title, string action, int x, int y)
+        {
             var button = Button(title, () => SendCommand(action));
             button.Dock = DockStyle.Fill; button.Margin = new Padding(1); button.Font = new Font("Consolas", 17, FontStyle.Bold);
             pad.Controls.Add(button, x, y);
         }
-        PadButton("▲","up",1,0); PadButton("◀","left",0,1);
-        PadButton("▶","right",2,1); PadButton("▼","down",1,2);
-        pad.Controls.Add(new Label { Text = "+", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleCenter,
-            Font = new Font("Consolas", 17, FontStyle.Bold) }, 1, 1);
-        controls.Controls.Add(pad,0,0);
-        var actions = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = false, Padding = new Padding(12, 45, 0, 0) };
-        void ActionButton(string letter, string action) {
+        PadButton("▲", "up", 1, 0); PadButton("◀", "left", 0, 1);
+        PadButton("▶", "right", 2, 1); PadButton("▼", "down", 1, 2);
+        pad.Controls.Add(new Label
+        {
+            Text = "+",
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleCenter,
+            Font = new Font("Consolas", 17, FontStyle.Bold)
+        }, 1, 1);
+        controls.Controls.Add(pad, 0, 0);
+        var actions = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(12, 45, 0, 0)
+        };
+        void ActionButton(string letter, string action)
+        {
             var b = Button(letter, () => SendCommand(action));
             b.Width = 78; b.Height = 78; b.AutoSize = false;
             b.Font = new Font("Consolas", 24, FontStyle.Bold);
@@ -153,9 +183,9 @@ public sealed class MainWindow : Form
             b.FlatAppearance.BorderColor = Color.WhiteSmoke; b.BackColor = Color.FromArgb(44, 47, 50);
             actions.Controls.Add(b);
         }
-        ActionButton("B","back"); ActionButton("A","select");
-        controls.Controls.Add(actions,2,0);
-        root.Controls.Add(controls,0,2);
+        ActionButton("B", "back"); ActionButton("A", "select");
+        controls.Controls.Add(actions, 2, 0);
+        root.Controls.Add(controls, 0, 2);
         Controls.Add(root);
         ApplyMonochrome(root);
         // Always render only device pixels; a disconnected preview must not imitate the OLED.
@@ -168,9 +198,17 @@ public sealed class MainWindow : Form
     private void ShowSettings()
     {
         if (settingsWindow is { IsDisposed: false }) { settingsWindow.Activate(); return; }
-        settingsWindow = new Form { Text = "PocketOS / Settings & Tools", Width = 910, Height = 690,
-            StartPosition = FormStartPosition.CenterParent, BackColor = Surface, ForeColor = Ink,
-            Font = new Font("Consolas", 10), KeyPreview = false };
+        settingsWindow = new Form
+        {
+            Text = "PocketOS / Settings & Tools",
+            Width = 910,
+            Height = 690,
+            StartPosition = FormStartPosition.CenterParent,
+            BackColor = Surface,
+            ForeColor = Ink,
+            Font = new Font("Consolas", 10),
+            KeyPreview = false
+        };
         var tabs = new TabControl
         {
             Dock = DockStyle.Fill
@@ -183,18 +221,22 @@ public sealed class MainWindow : Form
         tabs.TabPages.Add(BuildHunt());
         tabs.TabPages.Add(BuildSettings());
         tabs.TabPages.Add(BuildUpdates());
-        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 2,
-            Padding = new Padding(12) };
+        var layout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            RowCount = 2,
+            Padding = new Padding(12)
+        };
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 76));
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 24));
-        layout.Controls.Add(tabs,0,0);
+        layout.Controls.Add(tabs, 0, 0);
         var logPanel = new Panel { Dock = DockStyle.Fill };
         log.Dock = DockStyle.Fill; log.BackColor = Color.Black;
         log.ForeColor = Ink; logPanel.Controls.Add(log);
-        layout.Controls.Add(logPanel,0,1);
+        layout.Controls.Add(logPanel, 0, 1);
         settingsWindow.Controls.Add(layout);
         ApplyMonochrome(layout);
-        settingsWindow.FormClosed += (_,_) => { logPanel.Controls.Remove(log); settingsWindow = null; };
+        settingsWindow.FormClosed += (_, _) => { logPanel.Controls.Remove(log); settingsWindow = null; };
         settingsWindow.Show(this);
     }
 
@@ -203,9 +245,15 @@ public sealed class MainWindow : Form
         if (intro != null && keyData == Keys.Escape) { EndWindowIntro(); return true; }
         if (intro != null) return true;
         // Only capture keys while the gamepad window is active; text fields in Settings are unaffected.
-        string? action = keyData switch {
-            Keys.Up => "up", Keys.Down => "down", Keys.Left => "left", Keys.Right => "right",
-            Keys.Enter => "select", Keys.Back => "back", _ => null
+        string? action = keyData switch
+        {
+            Keys.Up => "up",
+            Keys.Down => "down",
+            Keys.Left => "left",
+            Keys.Right => "right",
+            Keys.Enter => "select",
+            Keys.Back => "back",
+            _ => null
         };
         if (action != null) { _ = SendCommand(action); return true; }
         return base.ProcessCmdKey(ref msg, keyData);
@@ -221,9 +269,11 @@ public sealed class MainWindow : Form
             if (bridge is { HasExited: false }) { Append("Bridge already running"); return; }
             if (!File.Exists(exe.Text)) { Warn("Choose your compiled Pokemon Partner bridge executable first."); return; }
             cfg.BridgeExe = exe.Text; Save();
-            try {
+            try
+            {
                 if (bridgeListener == null || !bridgeListener.IsListening) { Warn("USB bridge listener unavailable. Check logs."); return; }
-                if (string.IsNullOrWhiteSpace(cfg.SaveFolder) || !Directory.Exists(cfg.SaveFolder)) {
+                if (string.IsNullOrWhiteSpace(cfg.SaveFolder) || !Directory.Exists(cfg.SaveFolder))
+                {
                     using var folder = new FolderBrowserDialog { Description = "Select your emulator save folder for automatic game detection" };
                     if (folder.ShowDialog() != DialogResult.OK) return;
                     cfg.SaveFolder = folder.SelectedPath;
@@ -241,17 +291,17 @@ public sealed class MainWindow : Form
             await Task.CompletedTask;
         }), Button("Stop Bridge", async () => { if (bridge is { HasExited: false }) { bridge.Kill(entireProcessTree: true); Append("Bridge stopped"); } await Task.CompletedTask; })));
         panel.Controls.Add(Label("Select the ESP32 USB COM port to control the OLED without Wi-Fi."));
-        var controlPorts = new ComboBox {Width=130,DropDownStyle=ComboBoxStyle.DropDownList};
-        void RefreshControlPorts() {controlPorts.Items.Clear();controlPorts.Items.AddRange(SerialPort.GetPortNames());if(controlPorts.Items.Contains(cfg.ComPort))controlPorts.SelectedItem=cfg.ComPort;else if(controlPorts.Items.Count>0)controlPorts.SelectedIndex=0;}
-        panel.Controls.Add(Line(Label("OLED USB port"),controlPorts,Button("Refresh",async()=>{RefreshControlPorts();await Task.CompletedTask;})));
-        controlPorts.SelectedIndexChanged += async (_,_)=> {cfg.ComPort=controlPorts.SelectedItem as string ?? "";serialRetryAfter=DateTime.MinValue; lastSerialIssue="";await CloseSerialAsync();Save();await SyncDeviceState();};
+        var controlPorts = new ComboBox { Width = 130, DropDownStyle = ComboBoxStyle.DropDownList };
+        void RefreshControlPorts() { controlPorts.Items.Clear(); controlPorts.Items.AddRange(SerialPort.GetPortNames()); if (controlPorts.Items.Contains(cfg.ComPort)) controlPorts.SelectedItem = cfg.ComPort; else if (controlPorts.Items.Count > 0) controlPorts.SelectedIndex = 0; }
+        panel.Controls.Add(Line(Label("OLED USB port"), controlPorts, Button("Refresh", async () => { RefreshControlPorts(); await Task.CompletedTask; })));
+        controlPorts.SelectedIndexChanged += async (_, _) => { cfg.ComPort = controlPorts.SelectedItem as string ?? ""; serialRetryAfter = DateTime.MinValue; lastSerialIssue = ""; await CloseSerialAsync(); Save(); await SyncDeviceState(); };
         RefreshControlPorts();
         panel.Controls.Add(Label("Direct controls: Up / Down / Select / Back, or launch an app from the menu."));
         panel.Controls.Add(Line(Button("Pokemon Mode", () => SendCommand("pokemon")), Button("Open Menu", () => SendCommand("menu")), Button("IV Bars", () => SendCommand("ivs")), Button("Moves", () => SendCommand("moves"))));
         panel.Controls.Add(Line(Button("Up", () => SendCommand("up")), Button("Down", () => SendCommand("down")), Button("Select", () => SendCommand("select")), Button("Back", () => SendCommand("back"))));
-        var apps = new ComboBox {Width=265,DropDownStyle=ComboBoxStyle.DropDownList};
-        apps.Items.AddRange(new object[]{"Pokemon Partner","Pokemon Info","Wild Encounter","Shiny Hunt","Clock","About","PC Monitor","Settings"});apps.SelectedIndex=0;
-        panel.Controls.Add(Line(Label("Open OLED app"),apps,Button("Open",()=>SendCommand("app:"+apps.SelectedIndex))));
+        var apps = new ComboBox { Width = 265, DropDownStyle = ComboBoxStyle.DropDownList };
+        apps.Items.AddRange(new object[] { "Pokemon Partner", "Pokemon Info", "Wild Encounter", "Shiny Hunt", "Clock", "About", "PC Monitor", "Settings" }); apps.SelectedIndex = 0;
+        panel.Controls.Add(Line(Label("Open OLED app"), apps, Button("Open", () => SendCommand("app:" + apps.SelectedIndex))));
         return page;
     }
 
@@ -263,12 +313,22 @@ public sealed class MainWindow : Form
     private TabPage BuildPokemonTools()
     {
         var page = Page("Pokemon Studio");
-        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2,
-            Padding = new Padding(10) };
+        var layout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 2,
+            Padding = new Padding(10)
+        };
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 88));
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        var header = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoScroll = true,
-            FlowDirection = FlowDirection.LeftToRight, WrapContents = true };
+        var header = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            AutoScroll = true,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = true
+        };
         var generations = new ComboBox { Width = 410, DropDownStyle = ComboBoxStyle.DropDownList };
         generations.Items.AddRange(new object[] {
             "Gen 1 - Red / Blue / Yellow", "Gen 2 - Gold / Silver / Crystal",
@@ -317,13 +377,22 @@ public sealed class MainWindow : Form
         panel.Controls.Add(Label("MY POKEMON / SAVE FILE"));
         panel.Controls.Add(Label("Open a save to see file details. Pokemon boxes and editing need the PKHeX save engine."));
         var path = new TextBox { Width = 560, ReadOnly = true };
-        var info = new TextBox { Multiline = true, ReadOnly = true, Width = 750, Height = 150,
-            ScrollBars = ScrollBars.Vertical, BackColor = Color.Black, ForeColor = Ink,
-            Text = "No save opened.\r\nThis is a read-only preview; your files are never modified." };
+        var info = new TextBox
+        {
+            Multiline = true,
+            ReadOnly = true,
+            Width = 750,
+            Height = 150,
+            ScrollBars = ScrollBars.Vertical,
+            BackColor = Color.Black,
+            ForeColor = Ink,
+            Text = "No save opened.\r\nThis is a read-only preview; your files are never modified."
+        };
         panel.Controls.Add(Line(path, Button("Open Pokemon Save", () => {
             using var dlg = new OpenFileDialog { Filter = "Save files (*.sav;*.dsv;*.srm;*.dat;*.bin)|*.sav;*.dsv;*.srm;*.dat;*.bin|All files (*.*)|*.*" };
             if (dlg.ShowDialog(this) != DialogResult.OK) return Task.CompletedTask;
-            try {
+            try
+            {
                 var file = new FileInfo(dlg.FileName);
                 path.Text = file.FullName;
                 info.Text = "Name: " + file.Name + Environment.NewLine
@@ -332,7 +401,8 @@ public sealed class MainWindow : Form
                     + "Mode: READ ONLY - no changes made" + Environment.NewLine
                     + "Game identification: not available without save decoding";
                 Append("Opened save details read-only: " + file.Name);
-            } catch (Exception ex) { info.Text = "Unable to open save: " + ex.Message; }
+            }
+            catch (Exception ex) { info.Text = "Unable to open save: " + ex.Message; }
             return Task.CompletedTask;
         })));
         panel.Controls.Add(info);
@@ -361,14 +431,25 @@ public sealed class MainWindow : Form
         var minIv = new NumericUpDown { Width = 75, Minimum = 0, Maximum = 31, Value = 0 };
         panel.Controls.Add(Line(Label("Nature"), nature, Label("Minimum all IVs"), minIv, shiny));
         var summary = Label("Ready. The search limits displayed results to 500 matches.");
-        var results = new DataGridView { Width = 800, Height = 310, ReadOnly = true, AllowUserToAddRows = false,
-            AllowUserToDeleteRows = false, RowHeadersVisible = false, AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
-            BackgroundColor = Color.Black, ForeColor = Color.Black, SelectionMode = DataGridViewSelectionMode.FullRowSelect };
+        var results = new DataGridView
+        {
+            Width = 800,
+            Height = 310,
+            ReadOnly = true,
+            AllowUserToAddRows = false,
+            AllowUserToDeleteRows = false,
+            RowHeadersVisible = false,
+            AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+            BackgroundColor = Color.Black,
+            ForeColor = Color.Black,
+            SelectionMode = DataGridViewSelectionMode.FullRowSelect
+        };
         foreach (string title in new[] { "Frame", "Seed", "PID", "Nature", "Shiny", "HP", "Atk", "Def", "SpA", "SpD", "Spe" })
             results.Columns.Add(title, title);
         panel.Controls.Add(Line(Button("Search frames", () => {
             if (seed.Text.Trim().Length != 8 || !uint.TryParse(seed.Text.Trim(),
-                System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out uint state)) {
+                System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out uint state))
+            {
                 MessageBox.Show(this, "Enter exactly eight hexadecimal seed digits, such as 1234ABCD.", "Invalid seed");
                 return Task.CompletedTask;
             }
@@ -377,7 +458,8 @@ public sealed class MainWindow : Form
             int total = (int)scan.Value;
             for (int i = 0; i < first; i++) state = G4Next(state);
             int matches = 0;
-            for (int offset = 0; offset < total; offset++) {
+            for (int offset = 0; offset < total; offset++)
+            {
                 uint frameSeed = state;
                 uint temp = state;
                 ushort lo = (ushort)(G4Next(ref temp) >> 16);
@@ -536,29 +618,77 @@ public sealed class MainWindow : Form
 
     private TabPage BuildUpdates()
     {
-        var page = Page("Updates"); var panel = Stack(page);
+        var page = Page("Updates");
+        var panel = Stack(page);
+
         panel.Controls.Add(Label("Official releases: github.com/cloudkirito20/PocketOS"));
         panel.Controls.Add(Label("Checks once every 24 hours while running. Manual checks are available anytime."));
-        var auto = new CheckBox { Text = "Automatically check GitHub Releases daily", Checked = cfg.AutoCheckUpdates, AutoSize = true };
-        auto.CheckedChanged += (_, _) => { cfg.AutoCheckUpdates = auto.Checked; Save(); };
+
+        var auto = new CheckBox
+        {
+            Text = "Automatically check GitHub Releases daily",
+            Checked = cfg.AutoCheckUpdates,
+            AutoSize = true
+        };
+
+        auto.CheckedChanged += (_, _) =>
+        {
+            cfg.AutoCheckUpdates = auto.Checked;
+            Save();
+        };
+
         panel.Controls.Add(auto);
-        var message = Label("No update check completed yet."); panel.Controls.Add(message);
-        panel.Controls.Add(Button("Check GitHub for Updates", async () => { await CheckGithubUpdatesAsync(true, message); }));
-        panel.Controls.Add(Button("Download and Install Windows + Bridge", async () => {
-            if (pendingRelease == null) { Warn("Check for updates first."); return; }
-            if (MessageBox.Show("Download the verified update, close PocketOS, install Manager and Bridge, and restart?", "Install PocketOS Update", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
-            await InstallGithubUpdateAsync(pendingRelease, message);
+
+        var message = Label("No update check completed yet.");
+        panel.Controls.Add(message);
+
+        panel.Controls.Add(Button("Check GitHub for Updates", async () =>
+        {
+            await CheckGithubUpdatesAsync(true, message);
         }));
-        panel.Controls.Add(Button("Download ESP32 Firmware (.bin)", async () => {
-            if (pendingRelease == null) { Warn("Check for updates first."); return; }
-            try {
-                message.Text = "Downloading verified ESP32 firmware...";
-                var path = await GithubReleases.DownloadVerifiedAsync(client, pendingRelease, "esp32", CancellationToken.None);
-                selectedBin = path;
-                message.Text = "Firmware downloaded and verified: " + path + ". Open Firmware Update to flash over USB after confirming your board and partitions.";
-            } catch (Exception ex) { message.Text = "Firmware download unavailable: " + ex.Message; }
+
+
+        panel.Controls.Add(Button("Download and Install Windows + Bridge", async () =>
+        {
+            if (pendingManifest == null)
+            {
+                Warn("Check for updates first.");
+                return;
+            }
+
+            if (MessageBox.Show(
+                "Download the verified update, close PocketOS, install Manager and Bridge, and restart?",
+                "Install PocketOS Update",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question) != DialogResult.Yes)
+            {
+                return;
+            }
+
+            Warn("Manifest update detected. Installer asset integration will be added in the next update phase.");
+
+            await Task.CompletedTask;
         }));
-        panel.Controls.Add(Label("ESP32 flashing is never automatic. Confirm the correct board and partition layout in Firmware Update."));
+
+
+        panel.Controls.Add(Button("Download ESP32 Firmware (.bin)", async () =>
+        {
+            if (pendingManifest == null)
+            {
+                Warn("Check for updates first.");
+                return;
+            }
+
+            Warn("ESP32 manifest firmware download integration will be added in the next update phase.");
+
+            await Task.CompletedTask;
+        }));
+
+
+        panel.Controls.Add(Label(
+            "ESP32 flashing is never automatic. Confirm the correct board and partition layout before flashing."
+        ));
+
         return page;
     }
 
@@ -566,26 +696,44 @@ public sealed class MainWindow : Form
     {
         if (updating || (!manual && (!cfg.AutoCheckUpdates || DateTime.UtcNow - cfg.LastGitHubCheckUtc < TimeSpan.FromHours(24)))) return;
         updating = true;
-        try {
+        try
+        {
             if (target != null) target.Text = "Checking GitHub Releases...";
-            var release = await GithubReleases.CheckAsync(client, CancellationToken.None);
-            pendingRelease = release;
-            cfg.LastGitHubCheckUtc = DateTime.UtcNow; Save();
-            string msg = $"Latest: {release.Tag} | Manager {release.ManagerVersion} | Bridge {release.BridgeVersion} | ESP32 {release.Esp32Version}";
+            var manifestClient = new PocketOSManager.Updates.ManifestUpdateClient();
+
+            var manifest = await manifestClient.CheckAsync(
+                PocketOSManager.Updates.UpdateSource.ManifestUrl);
+
+            if (manifest == null)
+            {
+                throw new Exception("Update manifest unavailable.");
+            }
+
+            cfg.LastGitHubCheckUtc = DateTime.UtcNow;
+            Save();
+
+            string msg =
+                $"Latest: {manifest.Version} | " +
+                $"Manager {manifest.ManagerVersion} | " +
+                $"Bridge {manifest.BridgeVersion} | " +
+                $"ESP32 {manifest.Esp32Version}";
             Append("GitHub: " + msg);
             if (target != null) target.Text = msg;
-            else if (GithubReleases.HasAvailableUpdates(release)) {
+            else if (pendingManifest != null)
+            {
                 BeginInvoke((Action)(() => {
                     if (!IsDisposed && MessageBox.Show("New PocketOS component updates are available. Open Updates?", "PocketOS Update", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes) ShowSettings();
                 }));
             }
-        } catch (Exception ex) { Append("GitHub update check: " + ex.Message); if (target != null) target.Text = "Update check failed: " + ex.Message; }
+        }
+        catch (Exception ex) { Append("GitHub update check: " + ex.Message); if (target != null) target.Text = "Update check failed: " + ex.Message; }
         finally { updating = false; }
     }
 
     private async Task InstallGithubUpdateAsync(GithubReleaseInfo release, Label message)
     {
-        try {
+        try
+        {
             message.Text = "Downloading and verifying Windows update...";
             var zip = await GithubReleases.DownloadVerifiedAsync(client, release, "windows", CancellationToken.None);
             var helper = Path.Combine(AppContext.BaseDirectory, "Install_Update.ps1");
@@ -596,7 +744,8 @@ public sealed class MainWindow : Form
             foreach (var arg in new[] { "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", helper, "-Archive", zip, "-InstallDirectory", AppContext.BaseDirectory, "-WaitPid", Environment.ProcessId.ToString() }) psi.ArgumentList.Add(arg);
             Process.Start(psi);
             cfg.TrayMode = false; Close();
-        } catch (Exception ex) { message.Text = "Update failed: " + ex.Message; }
+        }
+        catch (Exception ex) { message.Text = "Update failed: " + ex.Message; }
     }
 
     private async Task FlashAsync(string pythonExe, string port, string file, ProgressBar indicator)
@@ -630,12 +779,15 @@ public sealed class MainWindow : Form
 
     private void StartLocalBridgeListener()
     {
-        try {
+        try
+        {
             bridgeListener = new HttpListener();
             bridgeListener.Prefixes.Add(LocalBridgeUrl);
             bridgeListener.Start();
             _ = ProcessBridgeRequestsAsync(bridgeStop.Token);
-        } catch (Exception ex) {
+        }
+        catch (Exception ex)
+        {
             bridgeListener?.Close(); bridgeListener = null;
             BeginInvokeSafe(() => Append("USB bridge listener unavailable: " + ex.Message));
         }
@@ -650,7 +802,8 @@ public sealed class MainWindow : Form
     {
         var listener = bridgeListener;
         if (listener == null) return;
-        while (!token.IsCancellationRequested) {
+        while (!token.IsCancellationRequested)
+        {
             HttpListenerContext request;
             try { request = await listener.GetContextAsync(); }
             catch (HttpListenerException) { break; }
@@ -663,9 +816,11 @@ public sealed class MainWindow : Form
     {
         int code = 200;
         string body = "{\"ok\":true}";
-        try {
+        try
+        {
             string route = context.Request.Url?.AbsolutePath ?? "";
-            if (route == "/state" && context.Request.HttpMethod == "POST") {
+            if (route == "/state" && context.Request.HttpMethod == "POST")
+            {
                 using var reader = new StreamReader(context.Request.InputStream, Encoding.UTF8);
                 string json = await reader.ReadToEndAsync();
                 using var parsed = JsonDocument.Parse(json);
@@ -678,22 +833,32 @@ public sealed class MainWindow : Form
                     response => { if (response == "POCKET_ENCOUNTER_OK") acknowledged = true; });
                 if (!acknowledged) { code = 503; body = "{\"error\":\"USB encounter not acknowledged\"}"; }
                 else BeginInvokeSafe(() => Append("USB encounter: species #" + id));
-            } else if (route == "/heartbeat") {
+            }
+            else if (route == "/heartbeat")
+            {
                 await SerialRequest(cfg.ComPort, "POCKET_ENCOUNTER_HEARTBEAT", _ => { });
-            } else if (route == "/bridge" || route == "/health") {
+            }
+            else if (route == "/bridge" || route == "/health")
+            {
                 // Reports local listener readiness only; /state requires USB acknowledgement.
-            } else { code = 404; body = "{\"error\":\"Unknown route\"}"; }
-        } catch (Exception ex) {
+            }
+            else { code = 404; body = "{\"error\":\"Unknown route\"}"; }
+        }
+        catch (Exception ex)
+        {
             code = ex is InvalidDataException or JsonException ? 400 : 503;
             body = JsonSerializer.Serialize(new { error = ex.Message });
         }
-        try {
+        try
+        {
             context.Response.StatusCode = code;
             context.Response.ContentType = "application/json";
             byte[] bytes = Encoding.UTF8.GetBytes(body);
             context.Response.ContentLength64 = bytes.Length;
             await context.Response.OutputStream.WriteAsync(bytes);
-        } catch (Exception) { } finally { context.Response.Close(); }
+        }
+        catch (Exception) { }
+        finally { context.Response.Close(); }
     }
 
     private async Task SerialRequest(string port, string command, Action<string> onLine)
@@ -709,8 +874,11 @@ public sealed class MainWindow : Form
                     activeSerial?.Dispose();
                     activeSerial = new SerialPort(port, 115200)
                     {
-                        ReadTimeout = 170, WriteTimeout = 600, NewLine = "\n",
-                        DtrEnable = false, RtsEnable = false
+                        ReadTimeout = 170,
+                        WriteTimeout = 600,
+                        NewLine = "\n",
+                        DtrEnable = false,
+                        RtsEnable = false
                     };
                     activeSerial.Open();
                     activeSerialName = port;
@@ -774,7 +942,7 @@ public sealed class MainWindow : Form
         var parts = reply[13..].Split('|');
         if (parts.Length != 3 || !int.TryParse(parts[1], out int selected) || !int.TryParse(parts[2], out int active)) return;
         if (selected < 0 || selected >= pocketApps.Length || active < 0 || active >= pocketApps.Length) return;
-        void Update() { previewSelection=selected; previewMode=parts[0]=="MENU"?"MENU":pocketApps[active]; screenPreview.Invalidate(); status.Text="DEVICE STATE: " + previewMode + " / AWAITING FRAME"; }
+        void Update() { previewSelection = selected; previewMode = parts[0] == "MENU" ? "MENU" : pocketApps[active]; screenPreview.Invalidate(); status.Text = "DEVICE STATE: " + previewMode + " / AWAITING FRAME"; }
         if (InvokeRequired) BeginInvoke((Action)Update); else Update();
     }
     private void ApplyDeviceFrame(string reply)
@@ -785,7 +953,7 @@ public sealed class MainWindow : Form
         byte[] bytes;
         try { bytes = Convert.FromHexString(hex); }
         catch (FormatException) { Append("Invalid OLED framebuffer data."); return; }
-        void Update() { serialRetryAfter = DateTime.MinValue; lastSerialIssue = ""; liveFrame = bytes; screenPreview.Invalidate(); status.Text="● LIVE OLED MIRROR / " + cfg.ComPort; }
+        void Update() { serialRetryAfter = DateTime.MinValue; lastSerialIssue = ""; liveFrame = bytes; screenPreview.Invalidate(); status.Text = "● LIVE OLED MIRROR / " + cfg.ComPort; }
         if (InvokeRequired) BeginInvoke((Action)Update); else Update();
     }
     private async Task SyncDeviceState()
@@ -794,33 +962,41 @@ public sealed class MainWindow : Form
             (DateTime.UtcNow - lastNavigationUtc).TotalMilliseconds < 320 ||
             serialGate.CurrentCount == 0 || string.IsNullOrWhiteSpace(cfg.ComPort) || DateTime.UtcNow < serialRetryAfter) return;
         busySync = true;
-        try {
+        try
+        {
             // Ask for the device's actual app and the raw framebuffer; never infer pixels from a menu command.
             await SerialRequest(cfg.ComPort, "POCKET_GET_FRAME", ApplyDeviceFrame);
-        } finally { busySync = false; }
+        }
+        finally { busySync = false; }
     }
 
     private async Task SendCommand(string command)
     {
-        if(!string.IsNullOrEmpty(cfg.ComPort)) {
+        if (!string.IsNullOrEmpty(cfg.ComPort))
+        {
             if (DateTime.UtcNow < serialRetryAfter) { status.Text = "PORT BUSY / RETRYING AUTOMATICALLY"; return; }
             System.Threading.Interlocked.Increment(ref pendingCommands);
             lastNavigationUtc = DateTime.UtcNow;
-            try {
-                await SerialRequest(cfg.ComPort,"POCKET_CMD "+command,reply=> {
+            try
+            {
+                await SerialRequest(cfg.ComPort, "POCKET_CMD " + command, reply => {
                     // Keep command processing lightweight; do not repaint the whole screen.
-                    if(reply.StartsWith("POCKET_OK")) status.Text = "USB CONTROL / " + cfg.ComPort;
+                    if (reply.StartsWith("POCKET_OK")) status.Text = "USB CONTROL / " + cfg.ComPort;
                 });
-            } finally {
+            }
+            finally
+            {
                 lastNavigationUtc = DateTime.UtcNow;
                 System.Threading.Interlocked.Decrement(ref pendingCommands);
             }
             return;
         }
-        try {
-            using var response=await client.PostAsJsonAsync(cfg.EspAddress.TrimEnd('/')+"/pocketos/control",new {action=command});
+        try
+        {
+            using var response = await client.PostAsJsonAsync(cfg.EspAddress.TrimEnd('/') + "/pocketos/control", new { action = command });
             Append($"OLED command {command}: HTTP {(int)response.StatusCode}");
-        } catch(Exception ex) {Append("ESP32 unavailable: "+ex.Message);}
+        }
+        catch (Exception ex) { Append("ESP32 unavailable: " + ex.Message); }
     }
 
     private static void ApplyMonochrome(Control parent)
@@ -848,7 +1024,8 @@ public sealed class MainWindow : Form
         int ox = (screenPreview.Width - width) / 2, oy = (screenPreview.Height - height) / 2;
         g.FillRectangle(Brushes.Black, ox, oy, width, height);
         g.DrawRectangle(new Pen(Frame, 2), ox - 3, oy - 3, width + 5, height + 5);
-        if (liveFrame is { Length: 1024 } frame) {
+        if (liveFrame is { Length: 1024 } frame)
+        {
             using var pixelBrush = new SolidBrush(Ink);
             for (int yy = 0; yy < 64; ++yy)
                 for (int xx = 0; xx < 128; ++xx)
@@ -921,8 +1098,8 @@ public sealed class LazyTechIntro : Control
         g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
         float scale = Math.Min(ClientSize.Width / 1100f, ClientSize.Height / 710f);
         var state = g.Save();
-        g.TranslateTransform((ClientSize.Width - 1100 * scale)/2, (ClientSize.Height - 710 * scale)/2);
-        g.ScaleTransform(scale,scale);
+        g.TranslateTransform((ClientSize.Width - 1100 * scale) / 2, (ClientSize.Height - 710 * scale) / 2);
+        g.ScaleTransform(scale, scale);
         using var outline = new Pen(Color.White, 8);
         using var thin = new Pen(Color.White, 3);
         using var white = new SolidBrush(Color.White);
@@ -932,29 +1109,32 @@ public sealed class LazyTechIntro : Control
         {
             // Capture beat rendered inside the normal application window.
             int bob = (int)(Math.Sin(frame * .29) * 18);
-            var ball = new Rectangle(460,230 + bob,180,180);
-            g.DrawEllipse(outline,ball);
-            g.DrawLine(outline,460,320+bob,640,320+bob);
-            g.DrawEllipse(outline,528,288+bob,44,44);
-            if (frame < 12) {
-                g.DrawEllipse(thin, 465-frame*2, 230+bob-frame*2, 170+frame*4, 170+frame*4);
+            var ball = new Rectangle(460, 230 + bob, 180, 180);
+            g.DrawEllipse(outline, ball);
+            g.DrawLine(outline, 460, 320 + bob, 640, 320 + bob);
+            g.DrawEllipse(outline, 528, 288 + bob, 44, 44);
+            if (frame < 12)
+            {
+                g.DrawEllipse(thin, 465 - frame * 2, 230 + bob - frame * 2, 170 + frame * 4, 170 + frame * 4);
                 g.DrawString("CAPTURING...", small, white, 464, 465);
-            } else {
+            }
+            else
+            {
                 g.DrawString("GOTCHA!", bold, white, 463, 475);
             }
         }
         else
         {
-            int opening = Math.Min(78, (frame-30)*7);
-            g.DrawArc(outline, 460,230-opening,180,180,180,180);
-            g.DrawArc(outline, 460,230+opening,180,180,0,180);
+            int opening = Math.Min(78, (frame - 30) * 7);
+            g.DrawArc(outline, 460, 230 - opening, 180, 180, 180, 180);
+            g.DrawArc(outline, 460, 230 + opening, 180, 180, 0, 180);
             if (frame >= 37)
             {
                 // Render the user's real LazyTech logo, converted to black and white.
                 if (companyLogo != null)
-                    g.DrawImage(companyLogo, new Rectangle(268,168,565,380));
+                    g.DrawImage(companyLogo, new Rectangle(268, 168, 565, 380));
                 else
-                    g.DrawString("LazyTech",bold,white,446,347);
+                    g.DrawString("LazyTech", bold, white, 446, 347);
                 g.DrawString("PRESENTS", small, white, 492, 570);
             }
         }
