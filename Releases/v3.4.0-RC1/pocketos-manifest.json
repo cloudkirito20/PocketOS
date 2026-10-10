@@ -1,16 +1,9 @@
 {
   "Version": "3.4.0-RC1",
 
-  "ManagerVersion": "3.4.0",
-  "BridgeVersion": "3.4.0",
-  "UpdaterVersion": "3.4.0",
-  "FirmwareVersion": "3.4.0",
-
   "ManagerUrl": "https://github.com/cloudkirito20/PocketOS/releases/download/v3.4.0-RC1/PocketOSManager.zip",
 
   "BridgeUrl": "https://github.com/cloudkirito20/PocketOS/releases/download/v3.4.0-RC1/PocketOS.Bridge.zip",
 
-  "UpdaterUrl": "https://github.com/cloudkirito20/PocketOS/releases/download/v3.4.0-RC1/PocketOS.Updater.zip",
-
-  "FirmwareUrl": "https://github.com/cloudkirito20/PocketOS/releases/download/v3.4.0-RC1/PocketOS_ESP32.bin"
+  "UpdaterUrl": "https://github.com/cloudkirito20/PocketOS/releases/download/v3.4.0-RC1/PocketOS.Updater.zip"
 }
