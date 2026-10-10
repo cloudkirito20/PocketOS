@@ -1,0 +1,9 @@
+{
+  "Version": "3.4.0-RC1",
+  "ManagerVersion": "3.4.0",
+  "BridgeVersion": "3.4.0",
+  "Esp32Version": "3.4.0",
+  "ManagerPackage": "PocketOSManager.zip",
+  "BridgePackage": "PokemonBridge.zip",
+  "Firmware": "PocketOS_ESP32.bin"
+}
