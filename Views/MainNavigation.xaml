@@ -1,0 +1,22 @@
+<Grid>
+    <Border Background="#101810" Padding="8">
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+
+            <Button Content="Pokemon Partner"
+                    Style="{StaticResource NavButtonStyle}"/>
+
+            <Button Content="Wi-Fi"
+                    Style="{StaticResource NavButtonStyle}"/>
+
+            <Button Content="Shiny Hunt"
+                    Style="{StaticResource NavButtonStyle}"/>
+
+            <Button Content="Settings"
+                    Style="{StaticResource NavButtonStyle}"/>
+
+            <Button Content="Updates"
+                    Style="{StaticResource NavButtonStyle}"/>
+
+        </StackPanel>
+    </Border>
+</Grid>

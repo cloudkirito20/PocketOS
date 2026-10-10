@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 namespace LazyTech.PocketOS.Installer;
 
 public class InstallerEngine

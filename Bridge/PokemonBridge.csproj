@@ -10,4 +10,7 @@
   <ItemGroup>
     <PackageReference Include="PKHeX.Core" Version="*" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\PocketOS.Core\PocketOS.Core.csproj" />
+  </ItemGroup>
 </Project>
