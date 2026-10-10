@@ -171,10 +171,10 @@ public sealed class MainWindow : Form
             StartPosition = FormStartPosition.CenterParent, BackColor = Surface, ForeColor = Ink,
             Font = new Font("Consolas", 10), KeyPreview = false };
         var tabs = new TabControl { Dock = DockStyle.Fill };
+
         tabs.TabPages.Add(BuildPartner());
-        tabs.TabPages.Add(BuildPokemonTools());
         tabs.TabPages.Add(BuildWifi());
-        tabs.TabPages.Add(BuildHunt()); tabs.TabPages.Add(BuildFirmware());
+        tabs.TabPages.Add(BuildHunt());
         tabs.TabPages.Add(BuildSettings());
         tabs.TabPages.Add(BuildUpdates());
         var layout = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 2,
@@ -432,7 +432,7 @@ public sealed class MainWindow : Form
     // Optional Wi-Fi provisioning over the existing USB connection. Never auto-start radio.
     private TabPage BuildWifi()
     {
-        var page = Page("Wi-Fi (Manual)");
+        var page = Page("Wi-Fi");
         var panel = Stack(page);
         panel.Controls.Add(Label("WARNING: This board previously reset with BROWNOUT at WIFI_INIT. Wi-Fi stays OFF at boot. Use USB-only if resets continue."));
         panel.Controls.Add(Label("Scanning or connecting activates the ESP32 Wi-Fi radio and may reset the device."));
