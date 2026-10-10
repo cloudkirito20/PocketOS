@@ -1,0 +1,7 @@
+{
+  "name": "LazyTech PocketOS",
+  "version": "3.4.0-RC1",
+  "channel": "RC",
+  "installer": true,
+  "firmware": true
+}

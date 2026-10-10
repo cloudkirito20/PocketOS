@@ -9,7 +9,7 @@ public class ReleaseBuilder
         Version = version;
     }
 
-    public void PrepareReleaseFolder(string path)
+    public void Prepare(string path)
     {
         Directory.CreateDirectory(path);
     }

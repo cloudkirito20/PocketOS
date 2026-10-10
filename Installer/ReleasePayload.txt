@@ -1,0 +1,8 @@
+PocketOS v3.4.0 RC1
+
+Payload:
+- PocketOS.Manager
+- PocketOS.Bridge
+- PocketOS.Updater
+- ESP32 Firmware
+- Config
