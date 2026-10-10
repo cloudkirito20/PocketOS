@@ -1,0 +1,29 @@
+<Window x:Class="LazyTech.PocketOS.Installer.InstallerWindow"
+xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+Title="LazyTech PocketOS Installer"
+Height="400"
+Width="600">
+
+<Grid Margin="30">
+<StackPanel>
+
+<TextBlock Text="LazyTech PocketOS"
+FontSize="28"
+FontWeight="Bold"/>
+
+<TextBlock Text="Offline Installer"
+Margin="0,10,0,20"/>
+
+<TextBlock Text="Install Location:"/>
+
+<TextBox Text="C:\Users\User\AppData\Local\LazyTech\PocketOS"/>
+
+<Button Content="Install"
+Margin="0,30,0,0"
+Width="120"/>
+
+</StackPanel>
+</Grid>
+
+</Window>

@@ -1,0 +1,90 @@
+# ================================
+# LazyTech PocketOS .gitignore
+# ================================
+
+# Git
+.git/
+.gitignore~
+
+# Visual Studio / VS Code
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# .NET build output
+**/bin/
+**/obj/
+*.dll
+*.exe
+*.pdb
+*.cache
+
+# Build / publish output
+Build_Output/
+Publish_Output/
+Releases/*.zip
+Releases/*.exe
+Releases/*.bin
+
+# PocketOS generated packages
+PocketOS_Update.zip
+PocketOSInstaller.exe
+PocketOS_ESP32.bin
+pocketos-manifest.json
+
+# Installer temporary files
+Installer/bin/
+Installer/obj/
+
+# Windows Manager generated files
+Windows/bin/
+Windows/obj/
+
+# Bridge generated files
+Bridge/bin/
+Bridge/obj/
+Bridge/Build_Output/
+
+# ESP32 Arduino generated files
+ESP32/.pio/
+ESP32/build/
+*.elf
+*.map
+*.partitions.bin
+*.bootloader.bin
+*.merged.bin
+
+# Arduino temporary files
+*.ino.cpp
+*.hex
+*.o
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Secrets / local settings
+*.env
+appsettings.local.json
+local.settings.json
+
+# User-specific emulator paths and saves
+saves/
+*.sav
+*.srm
+*.dsv
+*.state
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+~*
