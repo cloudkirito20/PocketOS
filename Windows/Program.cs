@@ -6,6 +6,7 @@ using System.IO.Ports;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using PocketOSManager.UI;
 
 namespace PocketOSManager;
 
@@ -170,7 +171,12 @@ public sealed class MainWindow : Form
         settingsWindow = new Form { Text = "PocketOS / Settings & Tools", Width = 910, Height = 690,
             StartPosition = FormStartPosition.CenterParent, BackColor = Surface, ForeColor = Ink,
             Font = new Font("Consolas", 10), KeyPreview = false };
-        var tabs = new TabControl { Dock = DockStyle.Fill };
+        var tabs = new TabControl
+        {
+            Dock = DockStyle.Fill
+        };
+
+        TabControlStyler.Apply(tabs);
 
         tabs.TabPages.Add(BuildPartner());
         tabs.TabPages.Add(BuildWifi());
@@ -207,7 +213,7 @@ public sealed class MainWindow : Form
 
     private TabPage BuildPartner()
     {
-        var page = Page("Pokemon Partner"); var panel = Stack(page);
+        var page = Page("Partner"); ; var panel = Stack(page);
         panel.Controls.Add(Label("Your original bridge continues to perform Pokemon detection, encounter analysis, IV checks and ratings."));
         var exe = new TextBox { Text = cfg.BridgeExe, Width = 510 };
         panel.Controls.Add(Line(Label("Bridge executable"), exe, Button("Browse...", async () => { using var dlg = new OpenFileDialog { Filter = "Executable (*.exe)|*.exe" }; if (dlg.ShowDialog() == DialogResult.OK) { exe.Text = cfg.BridgeExe = dlg.FileName; Save(); } await Task.CompletedTask; })));
