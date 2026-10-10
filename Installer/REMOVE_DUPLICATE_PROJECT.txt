@@ -1,0 +1,7 @@
+Remove duplicate installer project:
+
+Installer/PocketOSInstaller.csproj
+
+Keep:
+
+Installer/LazyTech.PocketOS.Installer.csproj
