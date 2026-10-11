@@ -634,7 +634,7 @@ public sealed class MainWindow : Form
         var fileName = new TextBox
         {
             ReadOnly = true,
-            Width = 470
+            Width = 350
         };
 
 

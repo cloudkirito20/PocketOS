@@ -29,7 +29,7 @@ public sealed class FirmwareFlasher
             port,
             "--baud",
             "460800",
-            "write_flash",
+            "write-flash",
             "0x10000",
             firmware
         })
