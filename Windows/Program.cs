@@ -703,11 +703,13 @@ public sealed class MainWindow : Form
 
             var manifest = await manifestClient.CheckAsync(
                 PocketOSManager.Updates.UpdateSource.ManifestUrl);
+            
 
             if (manifest == null)
             {
                 throw new Exception("Update manifest unavailable.");
             }
+            pendingManifest = manifest;
 
             cfg.LastGitHubCheckUtc = DateTime.UtcNow;
             Save();
