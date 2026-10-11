@@ -10,5 +10,9 @@
 
   "BridgeUrl": "https://github.com/cloudkirito20/PocketOS/releases/download/v3.4.0-RC1/PocketOS.Bridge.zip",
 
-  "UpdaterUrl": "https://github.com/cloudkirito20/PocketOS/releases/download/v3.4.0-RC1/PocketOS.Updater.zip"
+  "UpdaterUrl": "https://github.com/cloudkirito20/PocketOS/releases/download/v3.4.0-RC1/PocketOS.Updater.zip",
+
+  "FirmwareUrl": "https://github.com/cloudkirito20/PocketOS/releases/download/v3.4.0-RC1/PocketOS_ESP32.bin",
+
+  "FirmwareSha256": ""
 }
