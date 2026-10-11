@@ -50,16 +50,6 @@ public sealed class InstallerEngine
             await DownloadAndExtractZipAsync(updaterUrl, "PocketOS.Updater.zip", progress, cancellationToken);
         }
 
-        if (!string.IsNullOrWhiteSpace(firmwareUrl))
-        {
-            var firmwareName = GetFileNameFromUrl(firmwareUrl, "PocketOS_ESP32.bin");
-            progress?.Report("DOWNLOADING FIRMWARE...");
-            await DownloadFileAsync(
-                firmwareUrl,
-                Path.Combine(InstallPath, firmwareName),
-                cancellationToken);
-            progress?.Report("FIRMWARE SAVED AS " + firmwareName);
-        }
 
         progress?.Report("POCKETOS INSTALLATION FILES READY.");
     }

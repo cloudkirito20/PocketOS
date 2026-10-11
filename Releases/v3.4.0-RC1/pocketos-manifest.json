@@ -1,6 +1,11 @@
 {
   "Version": "3.4.0-RC1",
 
+  "ManagerVersion": "3.4.0",
+  "BridgeVersion": "3.4.0",
+  "UpdaterVersion": "3.4.0",
+  "Esp32Version": "3.4.0",
+
   "ManagerUrl": "https://github.com/cloudkirito20/PocketOS/releases/download/v3.4.0-RC1/PocketOSManager.zip",
 
   "BridgeUrl": "https://github.com/cloudkirito20/PocketOS/releases/download/v3.4.0-RC1/PocketOS.Bridge.zip",
