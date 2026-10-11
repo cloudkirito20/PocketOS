@@ -281,11 +281,21 @@ public sealed class MainWindow : Form
                     cfg.SaveFolder = folder.SelectedPath;
                     Save();
                 }
-                var start = new ProcessStartInfo(exe.Text) { UseShellExecute = true, WorkingDirectory = Path.GetDirectoryName(exe.Text)! };
-                // Bridge retains its original RetroArch/melonDS memory scanner.
-                // Only its transport changes: loopback HTTP -> this Manager -> USB.
-                start.ArgumentList.Add("--esp32"); start.ArgumentList.Add(LocalBridgeUrl.TrimEnd('/'));
-                start.ArgumentList.Add("--save-folder"); start.ArgumentList.Add(cfg.SaveFolder);
+                var start = new ProcessStartInfo(exe.Text)
+                {
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                    WorkingDirectory = Path.GetDirectoryName(exe.Text)!
+                };
+
+                start.ArgumentList.Add("--esp32");
+                start.ArgumentList.Add(LocalBridgeUrl.TrimEnd('/'));
+
+                start.ArgumentList.Add("--save-folder");
+                start.ArgumentList.Add(cfg.SaveFolder);
+                start.ArgumentList.Add("--hidden");
+
                 bridge = Process.Start(start);
                 Append("Bridge started: emulator -> localhost -> PocketOS USB / " + cfg.ComPort);
             }

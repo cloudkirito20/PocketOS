@@ -1,0 +1,12 @@
+{
+  "SaveFolder": "",
+  "Game": "heartgold",
+  "Mode": "live-melonds",
+  "Esp32": "http://127.0.0.1:18765",
+  "PollMs": 400,
+  "HeartbeatMs": 2000,
+  "CitraHost": "127.0.0.1",
+  "CitraPort": 45987,
+  "RetroHost": "127.0.0.1",
+  "RetroPort": 55355
+}

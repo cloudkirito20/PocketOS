@@ -748,7 +748,7 @@ internal static class Program
                 else if (!waitingShown)
                 {
                     resetSend();
-                    Console.WriteLine("Waiting for Gen 4 wild/opponent Pokemon...");
+                    Console.WriteLine("Waiting for Gen 4 wild/opponent Pokemon... scanning RAM");
                     waitingShown = true;
                 }
             }
@@ -835,6 +835,7 @@ internal static class Program
                 var absolute = address + (uint)offset;
                 if (!candidates.ContainsKey(absolute))
                     candidates[absolute] = data.AsSpan(offset, 0x80).ToArray();
+                Console.WriteLine($"GEN4 STRUCT FOUND @ 0x{absolute:X8}");
             }
         }
 
@@ -851,11 +852,23 @@ internal static class Program
         // The documented order for a normal 1-v-1 battle is player first,
         // opponent second. Do not require them to be exactly 0x80 apart: the
         // research only guarantees appearance order, not adjacency.
-        if (candidates.Count >= 2)
+        if (candidates.Count > 0)
         {
-            var enemy = candidates.ElementAt(1);
-            if (debug) Console.WriteLine($"Gen 4 opponent selected as second battle structure: 0x{enemy.Key:X8}");
-            return (enemy.Key, enemy.Value);
+            foreach (var candidate in candidates)
+            {
+                if (TryParseGen4BattleMon(candidate.Value, out var mon))
+                {
+                    Console.WriteLine(
+                        $"Gen 4 battle candidate: {SpeciesName(mon.Species)} Lv.{mon.Level} @ 0x{candidate.Key:X8}");
+
+                    // Prefer non-empty opponent candidates.
+                    // Wild Pokemon usually have low/zero EVs.
+                    if (mon.Species > 0)
+                    {
+                        return (candidate.Key, candidate.Value);
+                    }
+                }
+            }
         }
 
         return null;
