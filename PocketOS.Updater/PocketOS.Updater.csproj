@@ -7,8 +7,4 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\PocketOS.Core\PocketOS.Core.csproj" />
-  </ItemGroup>
-
 </Project>

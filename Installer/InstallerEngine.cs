@@ -240,7 +240,7 @@ public sealed class ReleaseManifest
     public const string ManifestUrl =
         "https://raw.githubusercontent.com/cloudkirito20/PocketOS/main/Releases/v3.4.0-RC1/pocketos-manifest.json";
 
-    public string Version { get; set; } = "v3.4.0-RC1";
+    public string Version { get; set; } = "3.4.0-RC1";
     public string ManagerVersion { get; set; } = "";
     public string BridgeVersion { get; set; } = "";
     public string Esp32Version { get; set; } = "";
@@ -256,6 +256,7 @@ public sealed class ReleaseManifest
     public string? BridgeUrl { get; set; }
     public string? UpdaterUrl { get; set; }
     public string? InstallerUrl { get; set; }
+    public string InstallerVersion { get; set; } = "";
     public string? FirmwareUrl { get; set; }
 
     public string ResolveManagerUrl() =>

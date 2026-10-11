@@ -12,6 +12,5 @@
     <EmbeddedResource Include="Assets\LazyTechMonochrome.png" LogicalName="PocketOSManager.Assets.LazyTechMonochrome.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\PocketOS.Core\PocketOS.Core.csproj" />
   </ItemGroup>
 </Project>
