@@ -1,10 +1,12 @@
-PocketOS v3.4.0 Release Manifest
+Generated for existing PocketOSManager Program.cs.
 
-Location:
-Releases/v3.4.0-RC1/pocketos-manifest.json
+Your current code already has:
+- BuildFirmware()
+- FlashAsync()
+- SerialPort COM selection
+- esptool flashing
 
-Used by:
-PocketOSManager update checker.
+This package only adds the missing pipeline:
+manifest -> download -> verify -> flash.
 
-Flow:
-Manager -> Manifest -> Release Assets
+Integrate into Program.cs instead of replacing the whole file.

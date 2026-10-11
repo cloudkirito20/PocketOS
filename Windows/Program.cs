@@ -7,6 +7,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using PocketOSManager.UI;
+using System.Security.Cryptography;
 
 namespace PocketOSManager;
 
@@ -221,6 +222,7 @@ public sealed class MainWindow : Form
         tabs.TabPages.Add(BuildHunt());
         tabs.TabPages.Add(BuildSettings());
         tabs.TabPages.Add(BuildUpdates());
+        tabs.TabPages.Add(BuildFirmware());
         var layout = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
@@ -572,35 +574,218 @@ public sealed class MainWindow : Form
 
     private TabPage BuildFirmware()
     {
-        var page = Page("Firmware Update"); var panel = Stack(page);
-        panel.Controls.Add(Label("USB firmware upload: .bin ONLY. Requires Python and esptool (python -m pip install esptool)."));
-        panel.Controls.Add(Label("Use an APPLICATION firmware .bin built for your exact ESP32 and flash partition layout."));
-        var ports = new ComboBox { Width = 155, DropDownStyle = ComboBoxStyle.DropDownList };
-        void Refresh() { ports.Items.Clear(); ports.Items.AddRange(SerialPort.GetPortNames()); if (ports.Items.Count > 0) ports.SelectedIndex = 0; }
-        panel.Controls.Add(Line(Label("Serial Port"), ports, Button("Refresh", async () => { Refresh(); await Task.CompletedTask; })));
-        var python = new TextBox { Text = cfg.PythonExe, Width = 230 };
-        panel.Controls.Add(Line(Label("Python executable"), python));
-        var fileName = new TextBox { ReadOnly = true, Width = 470 };
-        panel.Controls.Add(Line(Label("Firmware (.bin)"), fileName, Button("Choose BIN", async () => {
-            using var dlg = new OpenFileDialog { Filter = "ESP32 firmware (*.bin)|*.bin", CheckFileExists = true };
-            if (dlg.ShowDialog() == DialogResult.OK) { selectedBin = dlg.FileName; fileName.Text = selectedBin; }
-            await Task.CompletedTask;
-        })));
-        var address = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 230 };
-        address.Items.Add("0x10000 - Application only"); address.SelectedIndex = 0;
-        panel.Controls.Add(Line(Label("Flash offset"), address));
-        panel.Controls.Add(Label("This updater intentionally does not flash bootloader/partitions and cannot accept merged factory images."));
-        var agree = new CheckBox { AutoSize = true, Text = "I verified the .bin matches this ESP32 and its existing partition scheme." };
+        var page = Page("Firmware Update");
+        var panel = Stack(page);
+
+        panel.Controls.Add(Label(
+            "PocketOS ESP32 Firmware Update"
+        ));
+
+        panel.Controls.Add(Label(
+            "Download firmware from GitHub manifest, verify SHA256, then flash ESP32."
+        ));
+
+
+        var ports = new ComboBox
+        {
+            Width = 155,
+            DropDownStyle = ComboBoxStyle.DropDownList
+        };
+
+
+        void RefreshPorts()
+        {
+            ports.Items.Clear();
+            ports.Items.AddRange(SerialPort.GetPortNames());
+
+            if (ports.Items.Count > 0)
+                ports.SelectedIndex = 0;
+        }
+
+
+        panel.Controls.Add(
+            Line(
+                Label("Serial Port"),
+                ports,
+                Button("Refresh", async () =>
+                {
+                    RefreshPorts();
+                    await Task.CompletedTask;
+                })
+            )
+        );
+
+
+        var python = new TextBox
+        {
+            Text = cfg.PythonExe,
+            Width = 230
+        };
+
+
+        panel.Controls.Add(
+            Line(
+                Label("Python executable"),
+                python
+            )
+        );
+
+
+        var fileName = new TextBox
+        {
+            ReadOnly = true,
+            Width = 470
+        };
+
+
+        panel.Controls.Add(
+            Line(
+                Label("Firmware (.bin)"),
+
+                fileName,
+
+
+                Button("Download Latest BIN", async () =>
+                {
+                    if (pendingManifest == null)
+                    {
+                        Warn("Check for updates first.");
+                        return;
+                    }
+
+
+                    if (string.IsNullOrWhiteSpace(
+                        pendingManifest.FirmwareUrl))
+                    {
+                        Warn("Firmware URL missing from manifest.");
+                        return;
+                    }
+
+
+                    await DownloadFirmwareAsync(
+                        pendingManifest.FirmwareUrl,
+                        pendingManifest.FirmwareSha256,
+                        fileName);
+                }),
+
+
+                Button("Choose BIN", async () =>
+                {
+                    using var dlg = new OpenFileDialog
+                    {
+                        Filter = "ESP32 firmware (*.bin)|*.bin",
+                        CheckFileExists = true
+                    };
+
+
+                    if (dlg.ShowDialog() == DialogResult.OK)
+                    {
+                        selectedBin = dlg.FileName;
+                        fileName.Text = selectedBin;
+                    }
+
+
+                    await Task.CompletedTask;
+                })
+            )
+        );
+
+
+        var address = new ComboBox
+        {
+            Width = 230,
+            DropDownStyle = ComboBoxStyle.DropDownList
+        };
+
+
+        address.Items.Add(
+            "0x10000 - Application only"
+        );
+
+        address.SelectedIndex = 0;
+
+
+        panel.Controls.Add(
+            Line(
+                Label("Flash offset"),
+                address
+            )
+        );
+
+
+        panel.Controls.Add(
+            Label(
+                "Only application firmware images are accepted. Bootloader and partition flashing are disabled."
+            )
+        );
+
+
+        var agree = new CheckBox
+        {
+            AutoSize = true,
+            Text =
+            "I verified the firmware matches this ESP32 and partition layout."
+        };
+
+
         panel.Controls.Add(agree);
-        var progress = new ProgressBar { Width = 610, Style = ProgressBarStyle.Marquee, Visible = false };
+
+
+        var progress = new ProgressBar
+        {
+            Width = 610,
+            Style = ProgressBarStyle.Marquee,
+            Visible = false
+        };
+
+
         panel.Controls.Add(progress);
-        var start = Button("Flash ESP32 (.bin)", async () => {
-            if (updating) return;
-            if (ports.SelectedItem is not string port || !File.Exists(selectedBin)) { Warn("Select a COM port and .bin firmware file."); return; }
-            if (!agree.Checked) { Warn("Confirm firmware compatibility before flashing."); return; }
-            await FlashAsync(python.Text, port, selectedBin, progress);
-        });
-        panel.Controls.Add(start); Refresh(); return page;
+
+
+
+        panel.Controls.Add(
+            Button(
+                "Flash ESP32 (.bin)",
+                async () =>
+                {
+                    if (updating)
+                        return;
+
+
+                    if (ports.SelectedItem is not string port ||
+                        !File.Exists(selectedBin))
+                    {
+                        Warn(
+                            "Select a COM port and firmware file."
+                        );
+
+                        return;
+                    }
+
+
+                    if (!agree.Checked)
+                    {
+                        Warn(
+                            "Confirm firmware compatibility before flashing."
+                        );
+
+                        return;
+                    }
+
+
+                    await FlashAsync(
+                        python.Text,
+                        port,
+                        selectedBin,
+                        progress);
+                }
+            )
+        );
+
+
+        RefreshPorts();
+
+        return page;
     }
 
     private TabPage BuildSettings()
@@ -748,6 +933,91 @@ public sealed class MainWindow : Form
             cfg.TrayMode = false; Close();
         }
         catch (Exception ex) { message.Text = "Update failed: " + ex.Message; }
+    }
+
+    private async Task DownloadFirmwareAsync(
+    string url,
+    string? expectedHash,
+    TextBox fileName)
+    {
+        try
+        {
+            var folder =
+                Path.Combine(
+                    Environment.GetFolderPath(
+                        Environment.SpecialFolder.LocalApplicationData),
+                    "LazyTech",
+                    "PocketOS",
+                    "Firmware");
+
+
+            Directory.CreateDirectory(folder);
+
+
+            var output =
+                Path.Combine(
+                    folder,
+                    "PocketOS_ESP32.bin");
+
+
+            Append(
+                "Downloading ESP32 firmware..."
+            );
+
+
+            using var http = new HttpClient();
+
+
+            var data =
+                await http.GetByteArrayAsync(url);
+
+
+            await File.WriteAllBytesAsync(
+                output,
+                data);
+
+
+
+            if (!string.IsNullOrWhiteSpace(expectedHash))
+            {
+                using var stream = File.OpenRead(output);
+
+
+                var hash =
+                    Convert.ToHexString(
+                        SHA256.HashData(stream));
+
+
+                if (!hash.Equals(
+                    expectedHash,
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    File.Delete(output);
+
+                    Warn(
+                        "Firmware SHA256 verification failed."
+                    );
+
+                    return;
+                }
+            }
+
+
+            selectedBin = output;
+
+            fileName.Text = output;
+
+
+            Append(
+                "ESP32 firmware ready: " + output
+            );
+        }
+        catch (Exception ex)
+        {
+            Warn(
+                "Firmware download failed: " + ex.Message
+            );
+        }
     }
 
     private async Task FlashAsync(string pythonExe, string port, string file, ProgressBar indicator)
