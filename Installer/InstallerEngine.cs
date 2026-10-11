@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
@@ -30,7 +31,6 @@ public sealed class InstallerEngine
         var managerUrl = manifest.ResolveManagerUrl();
         var bridgeUrl = manifest.ResolveBridgeUrl();
         var updaterUrl = manifest.ResolveUpdaterUrl();
-        var firmwareUrl = manifest.ResolveFirmwareUrl();
 
         if (!string.IsNullOrWhiteSpace(managerUrl))
         {
@@ -52,6 +52,53 @@ public sealed class InstallerEngine
 
 
         progress?.Report("POCKETOS INSTALLATION FILES READY.");
+    }
+    public async Task UninstallAsync(
+    IProgress<string>? progress = null)
+    {
+        try
+        {
+            var installPath =
+                Path.Combine(
+                    Environment.GetFolderPath(
+                        Environment.SpecialFolder.LocalApplicationData),
+                    "LazyTech",
+                    "PocketOS");
+
+            if (!Directory.Exists(installPath))
+            {
+                progress?.Report("PocketOS installation not found.");
+                return;
+            }
+
+            progress?.Report("Stopping PocketOS...");
+
+            foreach (var process in Process.GetProcessesByName("PocketOSManager"))
+            {
+                try
+                {
+                    process.Kill();
+                }
+                catch
+                {
+                }
+            }
+
+            await Task.Delay(1000);
+
+            progress?.Report("Removing PocketOS files...");
+
+            Directory.Delete(
+                installPath,
+                true);
+
+            progress?.Report("PocketOS removed successfully.");
+        }
+        catch (Exception ex)
+        {
+            progress?.Report(
+                "Uninstall failed: " + ex.Message);
+        }
     }
 
     public string GetManagerPath()
