@@ -1,5 +1,5 @@
 {
-  "SaveFolder": "",
+  "SaveFolder": "C:\\RetroArch-Win64\\saves\\melonDS DS",
   "Game": "heartgold",
   "Mode": "live-melonds",
   "Esp32": "http://127.0.0.1:18765",

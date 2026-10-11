@@ -1342,7 +1342,36 @@ public sealed class MainWindow : Form
     }
     private void Restore() { Show(); WindowState = FormWindowState.Normal; Activate(); }
     protected override void OnResize(EventArgs e) { base.OnResize(e); if (cfg.TrayMode && WindowState == FormWindowState.Minimized) Hide(); }
-    protected override void OnFormClosed(FormClosedEventArgs e) { bridgeStop.Cancel(); bridgeListener?.Close(); bridgeStop.Dispose(); mirrorTimer.Stop(); mirrorTimer.Dispose(); githubTimer.Stop(); githubTimer.Dispose(); activeSerial?.Dispose(); serialGate.Dispose(); tray.Visible = false; tray.Dispose(); client.Dispose(); base.OnFormClosed(e); }
+    protected override void OnFormClosed(FormClosedEventArgs e)
+    {
+        try
+        {
+            // Close hidden PokemonBridge process
+            if (bridge != null && !bridge.HasExited)
+            {
+                bridge.Kill();
+                bridge.WaitForExit(2000);
+                bridge.Dispose();
+                bridge = null;
+            }
+        }
+        catch
+        {
+            // Ignore cleanup errors
+        }
+
+
+        bridgeStop.Cancel();
+
+        bridgeListener?.Close();
+
+        bridgeStop.Dispose();
+
+        mirrorTimer.Stop();
+
+
+        base.OnFormClosed(e);
+    }
     private static Settings LoadSettings() { try { return JsonSerializer.Deserialize<Settings>(File.ReadAllText(ConfigPath)) ?? new(); } catch { return new(); } }
     private void Save() { try { Directory.CreateDirectory(Path.GetDirectoryName(ConfigPath)!); File.WriteAllText(ConfigPath, JsonSerializer.Serialize(cfg, new JsonSerializerOptions { WriteIndented = true })); } catch (Exception ex) { Append("Settings save failed: " + ex.Message); } }
     private void SafeLog(string message) { if (!IsDisposed && IsHandleCreated) BeginInvoke(new Action(() => Append(message))); }

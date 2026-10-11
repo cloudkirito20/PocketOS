@@ -52,6 +52,70 @@ public sealed class InstallerEngine
 
 
         progress?.Report("POCKETOS INSTALLATION FILES READY.");
+
+        CreateShortcut();
+
+        progress?.Report("DESKTOP SHORTCUT CREATED.");
+
+
+    }
+    private void CreateShortcut()
+    {
+        try
+        {
+            var desktop =
+                Environment.GetFolderPath(
+                    Environment.SpecialFolder.DesktopDirectory);
+
+
+            var shortcut =
+                Path.Combine(
+                    desktop,
+                    "PocketOS.lnk");
+
+
+            var shellType =
+                Type.GetTypeFromProgID(
+                    "WScript.Shell");
+
+
+            if (shellType == null)
+            {
+                return;
+            }
+
+
+            dynamic? shell =
+                Activator.CreateInstance(shellType);
+
+
+            if (shell == null)
+            {
+                return;
+            }
+
+
+            dynamic link =
+                shell.CreateShortcut(shortcut);
+
+
+            link.TargetPath =
+                GetManagerPath();
+
+            link.WorkingDirectory =
+                InstallPath;
+
+            link.Description =
+                "LazyTech PocketOS Manager";
+
+            link.Save();
+        }
+        catch (Exception ex)
+        {
+            // Shortcut creation failure should not stop installation.
+            Console.WriteLine(
+                "Shortcut creation failed: " + ex.Message);
+        }
     }
     public async Task UninstallAsync(
     IProgress<string>? progress = null)
